@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive Student Quiz App</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body {font-family: Arial; margin:0; background:#f4f6f9;}
+header {background:#4CAF50;color:white;text-align:center;padding:15px;}
+.container {display:flex;max-width:1200px;margin:20px auto;gap:20px;}
+.sidebar {width:25%;background:white;padding:15px;border-radius:10px;}
+.content {width:50%;background:white;padding:15px;border-radius:10px;}
+.imageBox {width:25%;}
+.imageBox img{width:100%;border-radius:10px;box-shadow:0 4px 10px rgba(0,0,0,0.2);}
+button {padding:10px;margin:5px 0;border:none;border-radius:5px;background:#4CAF50;color:white;cursor:pointer;width:100%;}
+button:hover{background:#45a049}
+.question{margin:10px 0;}
+.option{display:block;margin:5px 0;padding:8px;border:1px solid #ccc;border-radius:5px;cursor:pointer;}
+.selected{background:#d0f0d0}
+canvas{max-width:300px;margin-top:20px;}
+</style>
+</head>
+<body>
+<header><h1>📚 Interactive Quiz App</h1></header>
+
+<div class="container">
+
+  <!-- LEFT: TOPICS -->
+  <div class="sidebar">
+    <h3>Topics</h3>
+    <button onclick="setTopic('math')">➗ Maths</button>
+    <button onclick="setTopic('science')">🔬 Science</button>
+    <button onclick="setTopic('coding')">💻 Coding</button>
+    <button onclick="setTopic('puzzle')">🧩 Puzzle</button>
+
+    <h3>Levels</h3>
+    <div id="levels"></div>
+  </div>
+
+  <!-- CENTER: QUIZ -->
+  <div class="content">
+    <h2 id="title">Select Topic</h2>
+    <div id="quiz"></div>
+    <button onclick="submitQuiz()">Submit</button>
+    <h3 id="result"></h3>
+    <canvas id="chart"></canvas>
+  </div>
+
+  <!-- RIGHT: IMAGE -->
+  <div class="imageBox">
+    <img src="image.png" alt="Quiz Banner">
+  </div>
+
+</div>
+
+<script>
+let topic="";
+let level="";
+let currentQuiz=[];
+let answers={};
+let chart;
+
+const data = {
+ math:{basic:[{q:"2+2?",o:["3","4","5","6"],a:1}],easy:[{q:"5+7?",o:["10","11","12","13"],a:2}],intermediate:[{q:"12x2?",o:["22","24","26","28"],a:1}],advance:[{q:"25/5?",o:["3","4","5","6"],a:2}],hard:[{q:"sqrt(49)?",o:["5","6","7","8"],a:2}]},
+ science:{basic:[{q:"Water formula?",o:["H2O","CO2","O2","NaCl"],a:0}],easy:[{q:"Sun is?",o:["Planet","Star","Moon","Rock"],a:1}],intermediate:[{q:"Gas we breathe?",o:["Oxygen","CO2","Nitrogen","Helium"],a:0}],advance:[{q:"Force unit?",o:["Newton","Watt","Volt","Amp"],a:0}],hard:[{q:"Speed unit?",o:["m/s","kg","N","J"],a:0}]},
+ coding:{basic:[{q:"HTML stands for?",o:["Hyper Text Markup Language","None","Tool","Lang"],a:0}],easy:[{q:"CSS used for?",o:["Style","Logic","DB","None"],a:0}],intermediate:[{q:"JS is?",o:["Language","OS","DB","Tool"],a:0}],advance:[{q:"Loop?",o:["for","if","let","var"],a:0}],hard:[{q:"Array stores?",o:["Multiple","One","None","Text"],a:0}]},
+ puzzle:{basic:[{q:"Keys but no locks?",o:["Keyboard","Door","Car","Map"],a:0}],easy:[{q:"Hands but no clap?",o:["Clock","Human","Dog","Robot"],a:0}],intermediate:[{q:"Neck but no head?",o:["Bottle","Tree","Shirt","River"],a:0}],advance:[{q:"Speaks no mouth?",o:["Echo","Wind","Radio","Bell"],a:0}],hard:[{q:"Runs but no walk?",o:["Water","Car","Dog","Wind"],a:0}]}
+};
+
+function expand(qArr){let res=[];for(let i=0;i<10;i++) res.push(qArr[i%qArr.length]);return res;}
+
+function setTopic(t){
+ topic=t;
+ document.getElementById("title").innerText="Select Level";
+ const levelsDiv=document.getElementById("levels");
+ levelsDiv.innerHTML="";
+ ["basic","easy","intermediate","advance","hard"].forEach(l=>{
+  const btn=document.createElement("button");
+  btn.innerText=l;
+  btn.onclick=()=>loadQuiz(l);
+  levelsDiv.appendChild(btn);
+ });
+}
+
+function loadQuiz(l){
+ level=l;
+ currentQuiz = expand(data[topic][level]);
+ answers={};
+ document.getElementById("title").innerText=`${topic.toUpperCase()} - ${level}`;
+ const quizDiv=document.getElementById("quiz");
+ quizDiv.innerHTML="";
+
+ currentQuiz.forEach((q,i)=>{
+  const div=document.createElement("div");
+  div.classList.add("question");
+  div.innerHTML=`<b>${i+1}. ${q.q}</b>`;
+
+  q.o.forEach((opt,idx)=>{
+    const btn=document.createElement("div");
+    btn.classList.add("option");
+    btn.innerText=opt;
+    btn.onclick=()=>{
+      answers[i]=idx;
+      btn.parentNode.querySelectorAll('.option').forEach(o=>o.classList.remove('selected'));
+      btn.classList.add('selected');
+    };
+    div.appendChild(btn);
+  });
+  quizDiv.appendChild(div);
+ });
+}
+
+function submitQuiz(){
+ let score=0;
+ currentQuiz.forEach((q,i)=>{ if(answers[i]===q.a) score++; });
+
+ let msg="";
+ if(score>=8) msg="🔥 Excellent!";
+ else if(score>=5) msg="👍 Good job!";
+ else msg="💡 Keep practicing!";
+
+ document.getElementById("result").innerText=`Score: ${score}/10 - ${msg}`;
+
+ const ctx=document.getElementById('chart');
+ if(chart) chart.destroy();
+ chart=new Chart(ctx,{type:'pie',data:{labels:['Correct','Wrong'],datasets:[{data:[score,10-score]}]}});
+}
+</script>
+</body>
+</html>
